@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: c3e38783e001c0b4aad469087147900a
+timeCreated: 1540395115
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 131688
+  packageName: LOW POLY WORLD - HOSPITAL
+  packageVersion: 2.0
+  assetPath: Assets/LOW POLY WORLD - HOSPITAL/LOW POLY WORLD - HOSPITAL/models/props/prefab/transfusion.prefab
+  uploadId: 614613

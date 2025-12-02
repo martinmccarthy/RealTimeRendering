@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: f2e9bf04e22b2e24a9f65af693d4ca1e
+timeCreated: 1540386694
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 25800000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 131688
+  packageName: LOW POLY WORLD - HOSPITAL
+  packageVersion: 2.0
+  assetPath: Assets/LOW POLY WORLD - HOSPITAL/LOW POLY WORLD - HOSPITAL/scenes/hospital/LightingData.asset
+  uploadId: 614613

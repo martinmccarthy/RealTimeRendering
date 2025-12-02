@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 51baf29bd6df61e4c8db47a727e1a8cd
+timeCreated: 1540394947
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 131688
+  packageName: LOW POLY WORLD - HOSPITAL
+  packageVersion: 2.0
+  assetPath: Assets/LOW POLY WORLD - HOSPITAL/LOW POLY WORLD - HOSPITAL/models/props/prefab/laboratory_chair.prefab
+  uploadId: 614613

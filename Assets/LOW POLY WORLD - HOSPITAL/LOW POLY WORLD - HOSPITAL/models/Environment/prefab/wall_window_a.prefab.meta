@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 243eed1dbea190145b581ffe4a5ca867
+timeCreated: 1539163237
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 131688
+  packageName: LOW POLY WORLD - HOSPITAL
+  packageVersion: 2.0
+  assetPath: Assets/LOW POLY WORLD - HOSPITAL/LOW POLY WORLD - HOSPITAL/models/Environment/prefab/wall_window_a.prefab
+  uploadId: 614613

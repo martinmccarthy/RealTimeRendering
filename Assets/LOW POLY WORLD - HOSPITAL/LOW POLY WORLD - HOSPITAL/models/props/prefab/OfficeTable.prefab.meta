@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 652009f8fdeec1144a4c66c09b374bef
+timeCreated: 1540395236
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 131688
+  packageName: LOW POLY WORLD - HOSPITAL
+  packageVersion: 2.0
+  assetPath: Assets/LOW POLY WORLD - HOSPITAL/LOW POLY WORLD - HOSPITAL/models/props/prefab/OfficeTable.prefab
+  uploadId: 614613
