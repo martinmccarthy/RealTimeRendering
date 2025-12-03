@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
-public class HorrorPlayerController : MonoBehaviour
+public class PlayerMovement : MonoBehaviour
 {
     [Header("Input Actions")]
     public InputActionReference moveAction;       // Vector2 (WASD)
@@ -33,6 +33,11 @@ public class HorrorPlayerController : MonoBehaviour
 
     Vector3 camOriginalPos;
     float shakeTime;
+
+    private bool cameraLocked;
+    private Transform preLockLocation;
+    private Transform lockedTransform;
+    public float lerpSpeed = 1.0f;
 
     void OnEnable()
     {
@@ -69,18 +74,45 @@ public class HorrorPlayerController : MonoBehaviour
         HandleCameraShake();
     }
 
+    public void LookAndLock(Transform lookAt)
+    {
+        lockedTransform = cameraTransform;
+
+        Vector3 dir = (lookAt.position - cameraTransform.position).normalized;
+        Quaternion targetRot = Quaternion.LookRotation(dir);
+
+        cameraTransform.rotation = Quaternion.Lerp(
+            cameraTransform.rotation,
+            targetRot,
+            0.5f
+        );
+    }
+
+    public void Unlock()
+    {
+        cameraTransform.position = Vector3.Lerp(
+            lockedTransform.position,
+            camOriginalPos,
+            lerpSpeed
+        );
+    }
+
+
     void HandleLook()
     {
-        Vector2 look = lookAction.action.ReadValue<Vector2>();
+        if (!cameraLocked)
+        {
+            Vector2 look = lookAction.action.ReadValue<Vector2>();
 
-        float mouseX = look.x * sensitivity * Time.deltaTime;
-        float mouseY = look.y * sensitivity * Time.deltaTime;
+            float mouseX = look.x * sensitivity * Time.deltaTime;
+            float mouseY = look.y * sensitivity * Time.deltaTime;
 
-        rotationX -= mouseY;
-        rotationX = Mathf.Clamp(rotationX, minLookX, maxLookX);
+            rotationX -= mouseY;
+            rotationX = Mathf.Clamp(rotationX, minLookX, maxLookX);
 
-        cameraTransform.localRotation = Quaternion.Euler(rotationX, 0f, 0f);
-        transform.Rotate(Vector3.up * mouseX);
+            cameraTransform.localRotation = Quaternion.Euler(rotationX, 0f, 0f);
+            transform.Rotate(Vector3.up * mouseX);
+        }
     }
 
     void HandleMovement()
