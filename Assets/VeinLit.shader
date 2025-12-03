@@ -1,11 +1,7 @@
-Shader "Custom/URP/CelVeinPointLights"
+Shader "Custom/URP/VeinLit"
 {
     Properties
     {
-        _MainTex("Main Texture", 2D) = "white" {}
-        _Color("Tint Color", Color) = (1,1,1,1)
-        _Bands("Shading Bands", Float) = 3
-
         _BaseColor     ("Base Color", Color) = (0.2, 0.2, 0.2, 1)
         _VeinColor     ("Vein Color", Color) = (0.8, 0.1, 0.1, 1)
 
@@ -16,15 +12,18 @@ Shader "Custom/URP/CelVeinPointLights"
         _VeinSharpness ("Vein Sharpness", Float) = 3.0
         _VeinContrast  ("Vein Contrast", Float) = 2.0
         _ScrollSpeed   ("Vein Scroll Speed", Float) = 0.3
+
+        _Smoothness    ("Smoothness", Range(0,1)) = 0.4
+        _Metallic      ("Metallic", Range(0,1)) = 0.0
     }
 
     SubShader
     {
         Tags
         {
-            "RenderPipeline"="UniversalPipeline"
             "RenderType"="Opaque"
             "Queue"="Geometry"
+            "RenderPipeline"="UniversalPipeline"
         }
 
         Pass
@@ -32,24 +31,24 @@ Shader "Custom/URP/CelVeinPointLights"
             Name "ForwardLit"
             Tags { "LightMode" = "UniversalForward" }
 
-            HLSLPROGRAM
+            ZWrite On
+            Blend One Zero
 
+            HLSLPROGRAM
+            #pragma target 3.5
             #pragma vertex vert
             #pragma fragment frag
 
-            #pragma multi_compile_fog
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile _ _SHADOWS_SOFT
+            #pragma multi_compile_fog
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
-            TEXTURE2D(_MainTex);
-            SAMPLER(sampler_MainTex);
-            float4 _MainTex_ST;
-
-            float4 _Color;
-            float  _Bands;
-
+            CBUFFER_START(UnityPerMaterial)
             float4 _BaseColor;
             float4 _VeinColor;
             float  _VeinIntensity;
@@ -57,21 +56,24 @@ Shader "Custom/URP/CelVeinPointLights"
             float  _VeinSharpness;
             float  _VeinContrast;
             float  _ScrollSpeed;
+            float  _Smoothness;
+            float  _Metallic;
+            CBUFFER_END
 
             struct Attributes
             {
-                float3 positionOS : POSITION;
+                float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
                 float2 uv         : TEXCOORD0;
             };
 
             struct Varyings
             {
-                float4 positionCS : SV_POSITION;
-                float2 uv         : TEXCOORD0;
-                float3 positionWS : TEXCOORD1;
-                float3 normalWS   : TEXCOORD2;
-                float  fogFactor  : TEXCOORD3;
+                float4 positionHCS              : SV_POSITION;
+                float3 positionWS               : TEXCOORD0;
+                float3 normalWS                 : TEXCOORD1;
+                float2 uv                       : TEXCOORD2;
+                half4  fogFactorAndVertexLight : TEXCOORD3;
             };
 
             float hash(float3 p)
@@ -124,31 +126,28 @@ Shader "Custom/URP/CelVeinPointLights"
                 return value;
             }
 
-            Varyings vert(Attributes input)
+            Varyings vert(Attributes IN)
             {
-                Varyings output;
+                Varyings OUT;
+                float3 positionWS = TransformObjectToWorld(IN.positionOS.xyz);
+                float3 normalWS   = TransformObjectToWorldNormal(IN.normalOS);
 
-                float3 positionWS = TransformObjectToWorld(input.positionOS);
-                float3 normalWS   = TransformObjectToWorldNormal(input.normalOS);
+                OUT.positionHCS = TransformWorldToHClip(positionWS);
+                OUT.positionWS  = positionWS;
+                OUT.normalWS    = normalize(normalWS);
+                OUT.uv          = IN.uv;
 
-                output.positionWS = positionWS;
-                output.normalWS   = normalWS;
+                half fogFactor = ComputeFogFactor(OUT.positionHCS.z);
+                half3 vertexLight = VertexLighting(positionWS, normalWS);
+                OUT.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
 
-                output.positionCS = TransformWorldToHClip(positionWS);
-                output.uv = TRANSFORM_TEX(input.uv, _MainTex);
-
-                output.fogFactor = ComputeFogFactor(output.positionCS.z);
-
-                return output;
+                return OUT;
             }
 
-            float4 frag(Varyings input) : SV_Target
+            half4 frag(Varyings IN) : SV_Target
             {
-                float3 baseAlbedo = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).rgb * _Color.rgb;
-
-                float3 worldPos = input.positionWS;
                 float t = _Time.y * _ScrollSpeed;
-                float3 p = worldPos * _VeinScale + float3(0, t, 0);
+                float3 p = IN.positionWS * _VeinScale + float3(0, t, 0);
 
                 float n = fbm(p);
                 float veins = abs(n - 0.5) * 2.0;
@@ -156,39 +155,17 @@ Shader "Custom/URP/CelVeinPointLights"
                 veins = pow(veins, _VeinContrast);
 
                 float veinMask = saturate(veins * _VeinIntensity);
+                float3 albedo = lerp(_BaseColor.rgb, _VeinColor.rgb, veinMask);
 
-                float3 albedo = lerp(baseAlbedo * _BaseColor.rgb, _VeinColor.rgb, veinMask);
+                Light mainLight = GetMainLight(TransformWorldToShadowCoord(IN.positionWS));
+                half NdotL = saturate(dot(IN.normalWS, mainLight.direction));
+                half3 lighting = albedo * (mainLight.color * NdotL + 0.05);
+                lighting += IN.fogFactorAndVertexLight.yzw * albedo;
 
-                float3 N = normalize(input.normalWS);
-                float3 color = 0;
+                lighting = MixFog(lighting, IN.fogFactorAndVertexLight.x);
 
-                #if defined(_ADDITIONAL_LIGHTS)
-                uint lightCount = GetAdditionalLightsCount();
-                [loop]
-                for (uint i = 0u; i < lightCount; ++i)
-                {
-                    Light light = GetAdditionalLight(i, input.positionWS);
-                    float3 L = normalize(light.direction);
-                    float ndotl = saturate(dot(N, L));
-
-                    float bands = max(_Bands, 1.0);
-                    float denom = max(bands - 1.0, 1.0);
-                    float banded = floor(ndotl * bands) / denom;
-
-                    float3 contrib = albedo * light.color * banded * light.distanceAttenuation;
-                    color += contrib;
-                }
-                #endif
-
-                float3 sh = SampleSH(N);
-                float3 ambient = albedo * sh;
-                color += ambient;
-
-                color = MixFog(color, input.fogFactor);
-
-                return float4(color, 1.0);
+                return half4(lighting, 1.0);
             }
-
             ENDHLSL
         }
     }

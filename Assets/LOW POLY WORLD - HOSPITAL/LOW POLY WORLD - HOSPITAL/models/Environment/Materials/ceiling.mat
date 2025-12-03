@@ -121,6 +121,7 @@ Material:
     - _RampSteps: 3.57
     - _ReceiveShadows: 1
     - _RimPower: 1.96
+    - _ScrollSpeed: 0.3
     - _ShadowThreshold: 0.557
     - _Shininess: 0
     - _Smoothness: 0.5
@@ -138,6 +139,10 @@ Material:
     - _Surface: 0
     - _UVSec: 0
     - _UseUIAlphaClip: 0
+    - _VeinContrast: 2
+    - _VeinIntensity: 0
+    - _VeinScale: 4
+    - _VeinSharpness: 3
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
@@ -148,5 +153,6 @@ Material:
     - _RimColor: {r: 1, g: 1, b: 1, a: 1}
     - _ShadowColor: {r: 0.036712352, g: 0.14150941, b: 0.06119231, a: 1}
     - _SpecColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
+    - _VeinColor: {r: 0.8, g: 0.09999997, b: 0.09999997, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
