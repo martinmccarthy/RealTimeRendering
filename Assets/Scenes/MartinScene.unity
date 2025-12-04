@@ -263,24 +263,6 @@ Transform:
   - {fileID: 1353957685}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &30372299 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1535821826848114, guid: eeae6bc565f4eaa40ab74e8f7ce45f4a, type: 3}
-  m_PrefabInstance: {fileID: 958364249}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &30372303
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 30372299}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9867fee8114246a4c9a0d46221072a22, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
-  interactText: {fileID: 0}
 --- !u!4 &63647463 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4527264526444092, guid: 9695eb71318ac5541885f3e486a90619, type: 3}
@@ -649,7 +631,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 219273472}
   m_LocalRotation: {x: -0.0000000037252899, y: -0.043579757, z: -0.99904996, w: 0.0000000011641528}
-  m_LocalPosition: {x: 0, y: 0, z: 0.001}
+  m_LocalPosition: {x: 0, y: 0, z: 0.002}
   m_LocalScale: {x: 0.44359994, y: 0.24166617, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -658,7 +640,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 184.995, y: 180, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: -0, y: -0.214}
+  m_AnchoredPosition: {x: 0, y: -0.227}
   m_SizeDelta: {x: 1, y: 1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &219273474
@@ -1645,6 +1627,20 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4676065764317380, guid: 400f5074dcb657b46b86aa8f641b0e9f, type: 3}
   m_PrefabInstance: {fileID: 570101279}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &516295658
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
+  m_Name: Player/Interact
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
+  m_Asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  m_ActionId: 852140f2-7766-474d-8707-702459ba45f3
 --- !u!1001 &556050560
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2997,9 +2993,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 219273473}
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 1535821826848114, guid: eeae6bc565f4eaa40ab74e8f7ce45f4a, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 30372303}
     - targetCorrespondingSourceObject: {fileID: 1799594847043842, guid: eeae6bc565f4eaa40ab74e8f7ce45f4a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 958364254}
@@ -3046,6 +3039,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ComputerController
   interactText: {fileID: 480332278}
+  lookAt: {fileID: 958364250}
+  playerMovement: {fileID: 1713245396}
+  buttonPress: {fileID: 516295658}
+  escapeButtonPress: {fileID: 1926628260}
 --- !u!4 &964831664 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4527264526444092, guid: 9695eb71318ac5541885f3e486a90619, type: 3}
@@ -4573,6 +4570,7 @@ MonoBehaviour:
   testCameraShake: 0
   shakeAmplitude: 0.05
   shakeFrequency: 8
+  lerpSpeed: 1
 --- !u!143 &1713245397
 CharacterController:
   m_ObjectHideFlags: 0
@@ -4843,6 +4841,20 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4527264526444092, guid: 9695eb71318ac5541885f3e486a90619, type: 3}
   m_PrefabInstance: {fileID: 923807791}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1926628260
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
+  m_Name: Player/Next
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
+  m_Asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  m_ActionId: b7230bb6-fc9b-4f52-8b25-f5e19cb2c2ba
 --- !u!4 &1928466745 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4527264526444092, guid: 9695eb71318ac5541885f3e486a90619, type: 3}
