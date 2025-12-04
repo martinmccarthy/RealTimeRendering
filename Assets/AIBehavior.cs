@@ -16,7 +16,15 @@ public class AIBehavior : MonoBehaviour
     [Header("Patrol")]
     public WaypointData[] waypoints;
     public float waypointThreshold = 0.5f;
-    public bool loop = true;
+    public bool loop = true; // not used for cycling, but used for facing next waypoint
+
+    [Header("Patrol Cycle")]
+    public float patrolInterval = 5f;   // seconds to wait before each patrol round
+
+    private bool patrolActive = false;  // are we currently walking through waypoints?
+    private float patrolTimer = 0f;     // counts up to patrolInterval
+    private Vector3 startPosition;
+    private Quaternion startRotation;
 
     [Header("Movement Speeds")]
     public float walkSpeed = 2f;
@@ -70,18 +78,24 @@ public class AIBehavior : MonoBehaviour
     {
         agent.speed = walkSpeed;
 
+        // Remember starting transform so we can teleport back after each patrol
+        startPosition = transform.position;
+        startRotation = transform.rotation;
+
         if (playerHead == null && Camera.main != null)
         {
             playerHead = Camera.main.transform;
             Debug.Log($"{name}: playerHead not assigned, using Camera.main ({playerHead.name}).");
         }
 
-        if (waypoints != null && waypoints.Length > 0 && waypoints[0].point != null)
-        {
-            agent.SetDestination(waypoints[0].point.position);
-            Debug.Log($"{name}: Starting patrol at waypoint 0 ({waypoints[0].point.name}).");
-        }
-        else
+        // FIRST PATROL SHOULD WAIT: start idle, not patrolling
+        patrolActive = false;
+        patrolTimer = 0f;
+        patrolFinished = false;
+        isWaiting = false;
+        currentWaypointIndex = 0;
+
+        if (waypoints == null || waypoints.Length == 0)
         {
             Debug.LogWarning($"{name}: No waypoints assigned to AIBehavior.");
         }
@@ -97,9 +111,9 @@ public class AIBehavior : MonoBehaviour
         if (gameOverTriggered)
             return;
 
-        // Check line of sight at a fixed interval (only needed until player is first spotted)
+        // Check line of sight ONLY while patrolling AND only until player is first spotted
         losTimer += Time.deltaTime;
-        if (!hasSpottedPlayer && losTimer >= losCheckInterval)
+        if (patrolActive && !hasSpottedPlayer && losTimer >= losCheckInterval)
         {
             losTimer = 0f;
             CheckLineOfSight();
@@ -129,19 +143,62 @@ public class AIBehavior : MonoBehaviour
         }
         else
         {
-            // Normal patrol only before the player is ever spotted
-            HandlePatrol();
+            // Normal patrol only before the player is ever spotted,
+            // and only according to the patrol cycle
+            HandlePatrolCycle();
         }
 
         DriveAnimator();
     }
 
+    // ---------------- PATROL CYCLE ----------------
 
+    private void HandlePatrolCycle()
+    {
+        // If patrol is not active, we're in the waiting phase between rounds
+        if (!patrolActive)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+
+            patrolTimer += Time.deltaTime;
+
+            if (patrolTimer >= patrolInterval)
+            {
+                // Time to start a new patrol round
+                patrolActive = true;
+                patrolTimer = 0f;
+                patrolFinished = false;
+                isWaiting = false;
+                currentWaypointIndex = 0;
+
+                if (waypoints != null && waypoints.Length > 0 && waypoints[0].point != null)
+                {
+                    agent.isStopped = false;
+                    agent.SetDestination(waypoints[0].point.position);
+                    Debug.Log($"{name}: Starting patrol cycle, going to waypoint 0 ({waypoints[0].point.name}).");
+                }
+                else
+                {
+                    Debug.LogWarning($"{name}: No waypoints set, cannot start patrol cycle.");
+                    patrolActive = false;
+                }
+            }
+        }
+        else
+        {
+            // Normal patrol logic while the cycle is active
+            HandlePatrol();
+        }
+    }
 
     // ---------------- PATROL LOGIC ----------------
 
     private void HandlePatrol()
     {
+        if (!patrolActive)
+            return;
+
         if (waypoints == null || waypoints.Length == 0 || patrolFinished)
             return;
 
@@ -206,26 +263,46 @@ public class AIBehavior : MonoBehaviour
         }
     }
 
-
     private void AdvanceToNextWaypoint()
     {
         currentWaypointIndex++;
 
         if (currentWaypointIndex >= waypoints.Length)
         {
-            if (loop)
-            {
-                currentWaypointIndex = 0;
-                Debug.Log($"{name}: Looping back to waypoint 0.");
-            }
-            else
-            {
-                currentWaypointIndex = waypoints.Length - 1;
-                patrolFinished = true;
-                agent.ResetPath();
-                Debug.Log($"{name}: Patrol finished at last waypoint.");
-            }
+            // End of patrol round: teleport back and wait for next cycle
+            EndPatrolCycle();
         }
+        else
+        {
+            Debug.Log($"{name}: Moving to waypoint {currentWaypointIndex} ({waypoints[currentWaypointIndex].point.name}).");
+        }
+    }
+
+    private void EndPatrolCycle()
+    {
+        Debug.Log($"{name}: Patrol cycle complete. Teleporting back to start and waiting.");
+
+        patrolActive = false;
+        patrolFinished = true;
+        isWaiting = false;
+        agent.isStopped = true;
+        agent.ResetPath();
+
+        // Teleport back to original position on the NavMesh
+        if (agent.isOnNavMesh)
+        {
+            agent.Warp(startPosition);
+        }
+        else
+        {
+            transform.position = startPosition;
+        }
+
+        transform.rotation = startRotation;
+
+        // Start counting again for the next patrol round
+        patrolTimer = 0f;
+        currentWaypointIndex = 0;
     }
 
     // ---------------- LINE OF SIGHT / CHASE ----------------
@@ -281,7 +358,6 @@ public class AIBehavior : MonoBehaviour
         }
     }
 
-
     // ---------------- GAME OVER ----------------
 
     private void TriggerGameOver()
@@ -315,7 +391,7 @@ public class AIBehavior : MonoBehaviour
         if (isChasing || hasSpottedPlayer)
         {
             // FORCE RUN ANIMATION
-            anim.SetFloat(forwardHash, 2f);     // full speed forward
+            anim.SetFloat(forwardHash, 2f);     // full speed forward (tune as needed for your blend tree)
             anim.SetFloat(rightHash, 0f);       // no strafing
             anim.SetFloat(turnHash, 0f);        // ignore turn animations
             return;
@@ -370,7 +446,7 @@ public class AIBehavior : MonoBehaviour
 
             int nextIndex = currentWaypointIndex;
 
-            // Pick next waypoint index based on loop/non-loop
+            // Pick next waypoint index based on loop/non-loop (for facing only)
             if (waypoints.Length > 1)
             {
                 int candidate = currentWaypointIndex + 1;
