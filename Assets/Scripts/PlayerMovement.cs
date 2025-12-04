@@ -38,7 +38,9 @@ public class PlayerMovement : MonoBehaviour
     private Transform preLockLocation;
     private Transform lockedTransform;
     public float lerpSpeed = 1.0f;
-
+    
+    Quaternion preLockRotation;
+    
     void OnEnable()
     {
         moveAction.action.Enable();
@@ -69,32 +71,43 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        HandleLook();
-        HandleMovement();
+        if (!cameraLocked)
+        {
+            HandleLook();
+            HandleMovement();
+        }
+
         HandleCameraShake();
     }
 
     public void LookAndLock(Transform lookAt)
     {
-        lockedTransform = cameraTransform;
+        if (!cameraLocked)
+        {
+            cameraLocked = true;
+            preLockRotation = cameraTransform.localRotation;
+        }
 
         Vector3 dir = (lookAt.position - cameraTransform.position).normalized;
-        Quaternion targetRot = Quaternion.LookRotation(dir);
+        Quaternion targetRot = Quaternion.LookRotation(dir, Vector3.up);
 
         cameraTransform.rotation = Quaternion.Lerp(
             cameraTransform.rotation,
             targetRot,
-            0.5f
+            lerpSpeed * Time.deltaTime
         );
     }
-
     public void Unlock()
     {
-        cameraTransform.position = Vector3.Lerp(
-            lockedTransform.position,
-            camOriginalPos,
-            lerpSpeed
-        );
+        cameraLocked = false;
+
+        // Restore the original local rotation
+        cameraTransform.localRotation = preLockRotation;
+
+        // Keep the vertical look value in sync so HandleLook doesn't snap
+        Vector3 angles = cameraTransform.localEulerAngles;
+        rotationX = angles.x;
+        if (rotationX > 180f) rotationX -= 360f;
     }
 
 
